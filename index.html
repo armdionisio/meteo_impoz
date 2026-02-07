@@ -15,6 +15,9 @@
     .card h2 { font-size: 18px; margin-bottom: 10px; color: #00ffaa; }
     .card p { font-size: 26px; font-weight: bold; }
     .status { border: 1px solid #00ffcc; }
+    .chart-section { margin-top: 40px; text-align: left; }
+    .chart-title { font-size: 18px; color: #00ffaa; margin-bottom: 15px; text-shadow: 0 0 8px #00ffcc33; }
+    .chart-wrapper { background: #0b0b0b; border-radius: 12px; padding: 20px; box-shadow: 0 0 15px #00ffcc33; max-height: 400px; }
     footer { margin-top: 30px; color: #555; font-size: 14px; }
   </style>
 </head>
@@ -30,12 +33,19 @@
     <div class="card"><h2>🌧 Chuva</h2><p id="rain">--</p></div>
     <div class="card"><h2>📊 Pressão</h2><p id="pressure">-- hPa</p></div>
     <div class="card"><h2>💨 Clima</h2><p id="clima">-- </p></div>
-    
-    
+
+    <section class="chart-section">
+      <h2 class="chart-title">📈 Últimas 2 horas — Temperatura, Pressão e Humidade</h2>
+      <div class="chart-wrapper">
+        <canvas id="historyChart"></canvas>
+      </div>
+    </section>
+
     <footer><p>Projeto IoT com ESP32 • Trabalho Final • IMPOZ</p></footer>
   </div>
 
- <script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
 setInterval(function() {
   fetch("https://api.thingspeak.com/channels/3254668/feeds/last.json")
     .then(response => response.json())
@@ -43,12 +53,65 @@ setInterval(function() {
       document.getElementById("temp").innerText     = data.field1 + " °C";
       document.getElementById("hum").innerText      = data.field2 + " %";
       document.getElementById("pressure").innerText = data.field3 + " hPa";
-      document.getElementById("light").innerText    = data.field4; // não enviado ainda
-      document.getElementById("rain").innerText     = data.field5; // não enviado ainda
-      document.getElementById("clima").innerText    = data.field6; // cálculo ou manual
+      document.getElementById("light").innerText    = data.field4;
+      document.getElementById("rain").innerText     = data.field5;
+      document.getElementById("clima").innerText    = data.field6;
     })
     .catch(error => console.log(error));
-}, 2000); // Atualiza a cada 2 segundos
+}, 2000);
+
+// Gráfico das últimas 2 horas (Temperatura, Pressão, Humidade)
+var historyChart = null;
+
+function formatChartTime(isoStr) {
+  if (!isoStr) return "";
+  var d = new Date(isoStr);
+  return d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
+}
+
+function updateHistoryChart() {
+  fetch("https://api.thingspeak.com/channels/3254668/feeds.json?minutes=120")
+    .then(response => response.json())
+    .then(data => {
+      var feeds = data.feeds || [];
+      var labels = feeds.map(function(f) { return formatChartTime(f.created_at); });
+      var temp  = feeds.map(function(f) { var v = parseFloat(f.field1); return isNaN(v) ? null : v; });
+      var hum   = feeds.map(function(f) { var v = parseFloat(f.field2); return isNaN(v) ? null : v; });
+      var press = feeds.map(function(f) { var v = parseFloat(f.field3); return isNaN(v) ? null : v; });
+      if (feeds.length === 0) {
+        labels = ["Sem dados nas últimas 2h"];
+        temp = [null]; hum = [null]; press = [null];
+      }
+      var ctx = document.getElementById("historyChart").getContext("2d");
+      if (historyChart) historyChart.destroy();
+      historyChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [
+            { label: "Temperatura (°C)",  data: temp,  borderColor: "#00ffcc", backgroundColor: "rgba(0,255,204,0.1)", fill: true, tension: 0.3, yAxisID: "y" },
+            { label: "Humidade (%)",      data: hum,   borderColor: "#00aaff", backgroundColor: "rgba(0,170,255,0.1)", fill: true, tension: 0.3, yAxisID: "y" },
+            { label: "Pressão (hPa)",     data: press, borderColor: "#ffaa00", backgroundColor: "rgba(255,170,0,0.1)", fill: true, tension: 0.3, yAxisID: "y1" }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          aspectRatio: 2.2,
+          plugins: { legend: { labels: { color: "#00ffcc" } } },
+          scales: {
+            x: { ticks: { color: "#888", maxTicksLimit: 12 }, grid: { color: "rgba(0,255,204,0.1)" } },
+            y:  { type: "linear", position: "left",  ticks: { color: "#888" }, grid: { color: "rgba(0,255,204,0.1)" } },
+            y1: { type: "linear", position: "right", ticks: { color: "#888" }, grid: { drawOnChartArea: false } }
+          }
+        }
+      });
+    })
+    .catch(function(err) { console.log("Erro ao carregar histórico:", err); });
+}
+
+updateHistoryChart();
+setInterval(updateHistoryChart, 60000); // Atualiza o gráfico a cada 1 minuto
 </script>
 
 </body>
