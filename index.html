@@ -15,9 +15,9 @@
     .card h2 { font-size: 18px; margin-bottom: 10px; color: #00ffaa; }
     .card p { font-size: 26px; font-weight: bold; }
     .status { border: 1px solid #00ffcc; }
-    .chart-section { margin-top: 40px; text-align: left; }
+    .chart-section { margin-top: 40px; text-align: center; }
     .chart-title { font-size: 18px; color: #00ffaa; margin-bottom: 15px; text-shadow: 0 0 8px #00ffcc33; }
-    .chart-wrapper { background: #0b0b0b; border-radius: 12px; padding: 20px; box-shadow: 0 0 15px #00ffcc33; max-height: 400px; }
+    .chart-wrapper { background: #0b0b0b; border-radius: 12px; padding: 20px; box-shadow: 0 0 15px #00ffcc33; max-height: 400px; margin: 0 auto; max-width: 100%; }
     footer { margin-top: 30px; color: #555; font-size: 14px; }
   </style>
 </head>
@@ -35,9 +35,21 @@
     <div class="card"><h2>💨 Clima</h2><p id="clima">-- </p></div>
 
     <section class="chart-section">
-      <h2 class="chart-title">📈 Últimas 2 horas — Temperatura, Pressão e Humidade</h2>
+      <h2 class="chart-title">🌡 Temperatura — últimas 2 horas</h2>
       <div class="chart-wrapper">
-        <canvas id="historyChart"></canvas>
+        <canvas id="chartTemp"></canvas>
+      </div>
+    </section>
+    <section class="chart-section">
+      <h2 class="chart-title">💧 Humidade — últimas 2 horas</h2>
+      <div class="chart-wrapper">
+        <canvas id="chartHum"></canvas>
+      </div>
+    </section>
+    <section class="chart-section">
+      <h2 class="chart-title">📊 Pressão — últimas 2 horas</h2>
+      <div class="chart-wrapper">
+        <canvas id="chartPressure"></canvas>
       </div>
     </section>
 
@@ -60,8 +72,8 @@ setInterval(function() {
     .catch(error => console.log(error));
 }, 2000);
 
-// Gráfico das últimas 2 horas (Temperatura, Pressão, Humidade)
-var historyChart = null;
+// Gráficos das últimas 2 horas (um por curva)
+var chartTemp = null, chartHum = null, chartPressure = null;
 
 function formatChartTime(isoStr) {
   if (!isoStr) return "";
@@ -69,7 +81,18 @@ function formatChartTime(isoStr) {
   return d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
 }
 
-function updateHistoryChart() {
+var chartOptions = {
+  responsive: true,
+  maintainAspectRatio: true,
+  aspectRatio: 2.2,
+  plugins: { legend: { labels: { color: "#00ffcc" } } },
+  scales: {
+    x: { ticks: { color: "#888", maxTicksLimit: 12 }, grid: { color: "rgba(0,255,204,0.1)" } },
+    y: { ticks: { color: "#888" }, grid: { color: "rgba(0,255,204,0.1)" } }
+  }
+};
+
+function updateHistoryCharts() {
   fetch("https://api.thingspeak.com/channels/3254668/feeds.json?minutes=120")
     .then(response => response.json())
     .then(data => {
@@ -82,36 +105,42 @@ function updateHistoryChart() {
         labels = ["Sem dados nas últimas 2h"];
         temp = [null]; hum = [null]; press = [null];
       }
-      var ctx = document.getElementById("historyChart").getContext("2d");
-      if (historyChart) historyChart.destroy();
-      historyChart = new Chart(ctx, {
+
+      if (chartTemp) chartTemp.destroy();
+      chartTemp = new Chart(document.getElementById("chartTemp").getContext("2d"), {
         type: "line",
         data: {
           labels: labels,
-          datasets: [
-            { label: "Temperatura (°C)",  data: temp,  borderColor: "#00ffcc", backgroundColor: "rgba(0,255,204,0.1)", fill: true, tension: 0.3, yAxisID: "y" },
-            { label: "Humidade (%)",      data: hum,   borderColor: "#00aaff", backgroundColor: "rgba(0,170,255,0.1)", fill: true, tension: 0.3, yAxisID: "y" },
-            { label: "Pressão (hPa)",     data: press, borderColor: "#ffaa00", backgroundColor: "rgba(255,170,0,0.1)", fill: true, tension: 0.3, yAxisID: "y1" }
-          ]
+          datasets: [{ label: "Temperatura (°C)", data: temp, borderColor: "#00ffcc", backgroundColor: "rgba(0,255,204,0.15)", fill: true, tension: 0.3 }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          aspectRatio: 2.2,
-          plugins: { legend: { labels: { color: "#00ffcc" } } },
-          scales: {
-            x: { ticks: { color: "#888", maxTicksLimit: 12 }, grid: { color: "rgba(0,255,204,0.1)" } },
-            y:  { type: "linear", position: "left",  ticks: { color: "#888" }, grid: { color: "rgba(0,255,204,0.1)" } },
-            y1: { type: "linear", position: "right", ticks: { color: "#888" }, grid: { drawOnChartArea: false } }
-          }
-        }
+        options: chartOptions
+      });
+
+      if (chartHum) chartHum.destroy();
+      chartHum = new Chart(document.getElementById("chartHum").getContext("2d"), {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{ label: "Humidade (%)", data: hum, borderColor: "#00aaff", backgroundColor: "rgba(0,170,255,0.15)", fill: true, tension: 0.3 }]
+        },
+        options: chartOptions
+      });
+
+      if (chartPressure) chartPressure.destroy();
+      chartPressure = new Chart(document.getElementById("chartPressure").getContext("2d"), {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{ label: "Pressão (hPa)", data: press, borderColor: "#ffaa00", backgroundColor: "rgba(255,170,0,0.15)", fill: true, tension: 0.3 }]
+        },
+        options: chartOptions
       });
     })
     .catch(function(err) { console.log("Erro ao carregar histórico:", err); });
 }
 
-updateHistoryChart();
-setInterval(updateHistoryChart, 60000); // Atualiza o gráfico a cada 1 minuto
+updateHistoryCharts();
+setInterval(updateHistoryCharts, 60000); // Atualiza os gráficos a cada 1 minuto
 </script>
 
 </body>
