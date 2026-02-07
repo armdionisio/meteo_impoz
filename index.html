@@ -35,19 +35,21 @@
     <footer><p>Projeto IoT com ESP32 • Trabalho Final • IMPOZ</p></footer>
   </div>
 
-  <script>
-    // JAVASCRIPT PARA ATUALIZAR OS DADOS AUTOMATICAMENTE
-    setInterval(function() {
-      fetch("/dados") // Pede os dados ao ESP32
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById("temp").innerText = data.temperatura + " °C";
-          document.getElementById("hum").innerText = data.humidade + " %";
-          document.getElementById("light").innerText = data.luz;
-          document.getElementById("rain").innerText = data.chuva;
-        })
-        .catch(error => console.log(error));
-    }, 2000); // Atualiza a cada 2 segundos
-  </script>
+ <script>
+setInterval(function() {
+  fetch("https://api.thingspeak.com/channels/3254668/feeds/last.json")
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById("temp").innerText     = data.field1 + " °C";
+      document.getElementById("hum").innerText      = data.field2 + " %";
+      document.getElementById("pressure").innerText = data.field3 + " hPa";
+      document.getElementById("light").innerText    = "--"; // não enviado ainda
+      document.getElementById("rain").innerText     = "--"; // não enviado ainda
+      document.getElementById("clima").innerText    = "--"; // cálculo ou manual
+    })
+    .catch(error => console.log(error));
+}, 2000); // Atualiza a cada 2 segundos
+</script>
+
 </body>
 </html>
