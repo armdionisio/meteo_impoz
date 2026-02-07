@@ -43,9 +43,9 @@ setInterval(function() {
       document.getElementById("temp").innerText     = data.field1 + " °C";
       document.getElementById("hum").innerText      = data.field2 + " %";
       document.getElementById("pressure").innerText = data.field3 + " hPa";
-      document.getElementById("light").innerText    = "--"; // não enviado ainda
-      document.getElementById("rain").innerText     = "--"; // não enviado ainda
-      document.getElementById("clima").innerText    = "--"; // cálculo ou manual
+      document.getElementById("light").innerText    = data.field4; // não enviado ainda
+      document.getElementById("rain").innerText     = data.field5; // não enviado ainda
+      document.getElementById("clima").innerText    = data.field6; // cálculo ou manual
     })
     .catch(error => console.log(error));
 }, 2000); // Atualiza a cada 2 segundos
