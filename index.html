@@ -168,6 +168,7 @@ setInterval(function() {
       document.getElementById("rain").innerText     = data.field5;
       document.getElementById("clima").innerText    = data.field6;
       document.getElementById("vento").innerText    = data.field7 + " m/s";
+      document.getElementById("airStatus").innerText = data.field8;
     })
     .catch(error => console.log(error));
 }, 2000);
