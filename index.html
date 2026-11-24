@@ -2,11 +2,11 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Estação Meteorológica IoT</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    
-    /* Variáveis CSS para tema escuro (padrão - céu noturno) */
+
     :root {
       --bg-primary: #0a0e27;
       --bg-secondary: #1a1f3a;
@@ -18,11 +18,8 @@
       --card-bg: #151a35;
       --card-shadow: rgba(79, 195, 247, 0.2);
       --card-hover-shadow: rgba(79, 195, 247, 0.4);
-      --chart-grid: rgba(135, 206, 235, 0.15);
-      --chart-text: #9bb5c7;
     }
-    
-    /* Tema claro (céu diurno) */
+
     @media (prefers-color-scheme: light) {
       :root {
         --bg-primary: #e3f2fd;
@@ -35,250 +32,219 @@
         --card-bg: #ffffff;
         --card-shadow: rgba(2, 119, 189, 0.15);
         --card-hover-shadow: rgba(2, 119, 189, 0.3);
-        --chart-grid: rgba(2, 119, 189, 0.1);
-        --chart-text: #546e7a;
       }
     }
-    
-    body { 
+
+    body {
       background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-      color: var(--text-primary); 
+      color: var(--text-primary);
       min-height: 100vh;
       transition: background 0.3s ease, color 0.3s ease;
     }
-    
+
     .container { max-width: 1000px; margin: auto; padding: 20px; text-align: center; }
-    
-    h1 { 
-      margin-bottom: 5px; 
+
+    h1 {
+      margin-bottom: 5px;
       text-shadow: 0 0 15px var(--accent-primary), 0 2px 4px rgba(0,0,0,0.3);
       color: var(--text-primary);
     }
-    
-    .subtitle { 
-      color: var(--text-muted); 
-      margin-bottom: 30px; 
-    }
-    
+
+    .subtitle { color: var(--text-muted); margin-bottom: 30px; }
+
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-    
-    .card { 
-      background: var(--card-bg); 
-      border-radius: 12px; 
-      padding: 20px; 
-      box-shadow: 0 4px 20px var(--card-shadow); 
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px var(--card-shadow);
       transition: transform 0.3s, box-shadow 0.3s;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
-    .card:hover { 
-      transform: scale(1.05); 
-      box-shadow: 0 6px 25px var(--card-hover-shadow);
-    }
-    
-    .card h2 { 
-      font-size: 18px; 
-      margin-bottom: 10px; 
-      color: var(--accent-secondary); 
-    }
-    
-    .card p { 
-      font-size: 26px; 
-      font-weight: bold; 
-      color: var(--text-primary);
-    }
-    
-    .status { border: 1px solid var(--accent-primary); }
-    
+
+    .card:hover { transform: scale(1.05); box-shadow: 0 6px 25px var(--card-hover-shadow); }
+
+    .card h2 { font-size: 18px; margin-bottom: 10px; color: var(--accent-secondary); }
+
+    .card p { font-size: 26px; font-weight: bold; color: var(--text-primary); }
+
     .chart-section { margin-top: 40px; text-align: center; }
-    
-    .chart-title { 
-      font-size: 18px; 
-      color: var(--accent-secondary); 
-      margin-bottom: 15px; 
+
+    .chart-title {
+      font-size: 18px;
+      color: var(--accent-secondary);
+      margin-bottom: 15px;
       text-shadow: 0 0 8px var(--card-shadow);
     }
-    
-    .chart-wrapper { 
-      background: var(--card-bg); 
-      border-radius: 12px; 
-      padding: 20px; 
-      box-shadow: 0 4px 20px var(--card-shadow); 
-      max-height: 400px; 
-      margin: 0 auto; 
+
+    .chart-wrapper {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px var(--card-shadow);
+      margin: 0 auto;
       max-width: 100%;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
-    footer { 
-      margin-top: 30px; 
-      color: var(--text-muted); 
-      font-size: 14px; 
-    }
+
+    footer { margin-top: 30px; color: var(--text-muted); font-size: 14px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🌦 Estação Meteorológica IoT</h1>
-    <p class="subtitle">Monitoramento em tempo real via ESP32</p>
+    <p class="subtitle">Monitorização em tempo real via ESP32</p>
 
-
-    <div class="card"><h2>🌡 Temperatura</h2><p id="temp">-- °C</p></div>
-    <div class="card"><h2>💧 Humidade</h2><p id="hum">-- %</p></div>
-    <div class="card"><h2>🌬 Vento</h2><p id="vento">-- </p></div>
-    <div class="card"><h2>☀ Luz (LDR)</h2><p id="light">--</p></div>
-    <div class="card"><h2>🌧 Chuva</h2><p id="rain">--</p></div>
-    <div class="card"><h2>📊 Pressão</h2><p id="pressure">-- hPa</p></div>
-    <div class="card"><h2>💨 Clima</h2><p id="clima">-- </p></div>
-    <div class="card"><h2> Qualidade do Ar</h2><p id="airStatus">-- </p></div>
-    
+    <div class="cards">
+      <div class="card"><h2>🌡 Temperatura</h2><p id="temp">-- °C</p></div>
+      <div class="card"><h2>💧 Humidade</h2><p id="hum">-- %</p></div>
+      <div class="card"><h2>🌬 Vento</h2><p id="vento">-- m/s</p></div>
+      <div class="card"><h2>☀ Luz (LDR)</h2><p id="light">--</p></div>
+      <div class="card"><h2>🌧 Chuva</h2><p id="rain">--</p></div>
+      <div class="card"><h2>📊 Pressão</h2><p id="pressure">-- hPa</p></div>
+      <div class="card"><h2>💨 Clima</h2><p id="clima">--</p></div>
+      <div class="card"><h2>🏭 Qualidade do Ar</h2><p id="airStatus">--</p></div>
+    </div>
 
     <section class="chart-section">
       <h2 class="chart-title">🌡 Temperatura — últimas 2 horas</h2>
-      <div class="chart-wrapper">
-        <canvas id="chartTemp"></canvas>
-      </div>
+      <div class="chart-wrapper"><canvas id="chartTemp"></canvas></div>
     </section>
     <section class="chart-section">
       <h2 class="chart-title">💧 Humidade — últimas 2 horas</h2>
-      <div class="chart-wrapper">
-        <canvas id="chartHum"></canvas>
-      </div>
+      <div class="chart-wrapper"><canvas id="chartHum"></canvas></div>
     </section>
     <section class="chart-section">
       <h2 class="chart-title">📊 Pressão — últimas 2 horas</h2>
-      <div class="chart-wrapper">
-        <canvas id="chartPressure"></canvas>
-      </div>
+      <div class="chart-wrapper"><canvas id="chartPressure"></canvas></div>
     </section>
 
     <footer><p>Projeto IoT com ESP32</p></footer>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
-setInterval(function() {
-  fetch("https://api.thingspeak.com/channels/3254668/feeds/last.json")
-    .then(response => response.json())
-    .then(data => {
-      document.getElementById("temp").innerText     = data.field1 + " °C";
-      document.getElementById("hum").innerText      = data.field2 + " %";
-      document.getElementById("pressure").innerText = data.field3 + " hPa";
-      document.getElementById("light").innerText    = data.field4;
-      document.getElementById("rain").innerText     = data.field5;
-      document.getElementById("clima").innerText    = data.field6;
-      document.getElementById("vento").innerText    = data.field7 + " m/s";
-      document.getElementById("airStatus").innerText = data.field8;
-    })
-    .catch(error => console.log(error));
-}, 2000);
+    var CHANNEL_ID = "3254668";
+    var BASE_URL = "https://api.thingspeak.com/channels/" + CHANNEL_ID;
 
-// Gráficos das últimas 2 horas (um por curva)
-var chartTemp = null, chartHum = null, chartPressure = null;
-
-function formatChartTime(isoStr) {
-  if (!isoStr) return "";
-  var d = new Date(isoStr);
-  return d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
-}
-
-function getThemeColors() {
-  var isLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-  if (isLight) {
-    return {
-      text: "#546e7a",
-      grid: "rgba(2, 119, 189, 0.1)",
-      legend: "#0277bd",
-      temp: { border: "#ff6f00", fill: "rgba(255, 111, 0, 0.15)" },
-      hum: { border: "#0288d1", fill: "rgba(2, 136, 209, 0.15)" },
-      press: { border: "#f57c00", fill: "rgba(245, 124, 0, 0.15)" }
-    };
-  } else {
-    return {
-      text: "#9bb5c7",
-      grid: "rgba(135, 206, 235, 0.15)",
-      legend: "#87ceeb",
-      temp: { border: "#ffb74d", fill: "rgba(255, 183, 77, 0.15)" },
-      hum: { border: "#4fc3f7", fill: "rgba(79, 195, 247, 0.15)" },
-      press: { border: "#ffcc80", fill: "rgba(255, 204, 128, 0.15)" }
-    };
-  }
-}
-
-function getChartOptions() {
-  var colors = getThemeColors();
-  return {
-    responsive: true,
-    maintainAspectRatio: true,
-    aspectRatio: 2.2,
-    plugins: { legend: { labels: { color: colors.legend } } },
-    scales: {
-      x: { ticks: { color: colors.text, maxTicksLimit: 12 }, grid: { color: colors.grid } },
-      y: { ticks: { color: colors.text }, grid: { color: colors.grid } }
+    // Mostra "--" se o valor vier vazio (null/undefined/"")
+    function val(v, suffix) {
+      if (v === null || v === undefined || v === "") return "--";
+      return suffix ? v + " " + suffix : String(v);
     }
-  };
-}
 
-function updateHistoryCharts() {
-  fetch("https://api.thingspeak.com/channels/3254668/feeds.json?minutes=120")
-    .then(response => response.json())
-    .then(data => {
-      var feeds = data.feeds || [];
-      var labels = feeds.map(function(f) { return formatChartTime(f.created_at); });
-      var temp  = feeds.map(function(f) { var v = parseFloat(f.field1); return isNaN(v) ? null : v; });
-      var hum   = feeds.map(function(f) { var v = parseFloat(f.field2); return isNaN(v) ? null : v; });
-      var press = feeds.map(function(f) { var v = parseFloat(f.field3); return isNaN(v) ? null : v; });
-      if (feeds.length === 0) {
-        labels = ["Sem dados nas últimas 2h"];
-        temp = [null]; hum = [null]; press = [null];
+    function updateCards() {
+      fetch(BASE_URL + "/feeds/last.json")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          document.getElementById("temp").innerText      = val(data.field1, "°C");
+          document.getElementById("hum").innerText       = val(data.field2, "%");
+          document.getElementById("pressure").innerText  = val(data.field3, "hPa");
+          document.getElementById("light").innerText     = val(data.field4);
+          document.getElementById("rain").innerText      = val(data.field5);
+          document.getElementById("clima").innerText     = val(data.field6);
+          document.getElementById("vento").innerText     = val(data.field7, "m/s");
+          document.getElementById("airStatus").innerText = val(data.field8);
+        })
+        .catch(function (err) { console.log("Erro ao carregar dados:", err); });
+    }
+
+    // Gráficos das últimas 2 horas
+    var chartTemp = null, chartHum = null, chartPressure = null;
+
+    function formatChartTime(isoStr) {
+      if (!isoStr) return "";
+      var d = new Date(isoStr);
+      return d.getHours().toString().padStart(2, "0") + ":" + d.getMinutes().toString().padStart(2, "0");
+    }
+
+    function getThemeColors() {
+      var isLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+      if (isLight) {
+        return {
+          text: "#546e7a", grid: "rgba(2, 119, 189, 0.1)", legend: "#0277bd",
+          temp:  { border: "#ff6f00", fill: "rgba(255, 111, 0, 0.15)" },
+          hum:   { border: "#0288d1", fill: "rgba(2, 136, 209, 0.15)" },
+          press: { border: "#f57c00", fill: "rgba(245, 124, 0, 0.15)" }
+        };
       }
+      return {
+        text: "#9bb5c7", grid: "rgba(135, 206, 235, 0.15)", legend: "#87ceeb",
+        temp:  { border: "#ffb74d", fill: "rgba(255, 183, 77, 0.15)" },
+        hum:   { border: "#4fc3f7", fill: "rgba(79, 195, 247, 0.15)" },
+        press: { border: "#ffcc80", fill: "rgba(255, 204, 128, 0.15)" }
+      };
+    }
 
-      var colors = getThemeColors();
-      var options = getChartOptions();
+    function getChartOptions() {
+      var c = getThemeColors();
+      return {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2.2,
+        plugins: { legend: { labels: { color: c.legend } } },
+        scales: {
+          x: { ticks: { color: c.text, maxTicksLimit: 12 }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text }, grid: { color: c.grid } }
+        }
+      };
+    }
 
-      if (chartTemp) chartTemp.destroy();
-      chartTemp = new Chart(document.getElementById("chartTemp").getContext("2d"), {
+    function buildChart(existing, canvasId, label, labels, data, color) {
+      if (existing) existing.destroy();
+      return new Chart(document.getElementById(canvasId).getContext("2d"), {
         type: "line",
         data: {
           labels: labels,
-          datasets: [{ label: "Temperatura (°C)", data: temp, borderColor: colors.temp.border, backgroundColor: colors.temp.fill, fill: true, tension: 0.3 }]
+          datasets: [{
+            label: label, data: data,
+            borderColor: color.border, backgroundColor: color.fill,
+            fill: true, tension: 0.3
+          }]
         },
-        options: options
+        options: getChartOptions()
       });
+    }
 
-      if (chartHum) chartHum.destroy();
-      chartHum = new Chart(document.getElementById("chartHum").getContext("2d"), {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [{ label: "Humidade (%)", data: hum, borderColor: colors.hum.border, backgroundColor: colors.hum.fill, fill: true, tension: 0.3 }]
-        },
-        options: options
-      });
+    function updateHistoryCharts() {
+      if (typeof Chart === "undefined") {
+        console.log("Chart.js não foi carregado (CDN bloqueado?)");
+        return;
+      }
+      fetch(BASE_URL + "/feeds.json?minutes=120")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var feeds = data.feeds || [];
+          var toNum = function (v) { var n = parseFloat(v); return isNaN(n) ? null : n; };
+          var labels = feeds.map(function (f) { return formatChartTime(f.created_at); });
+          var temp   = feeds.map(function (f) { return toNum(f.field1); });
+          var hum    = feeds.map(function (f) { return toNum(f.field2); });
+          var press  = feeds.map(function (f) { return toNum(f.field3); });
 
-      if (chartPressure) chartPressure.destroy();
-      chartPressure = new Chart(document.getElementById("chartPressure").getContext("2d"), {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [{ label: "Pressão (hPa)", data: press, borderColor: colors.press.border, backgroundColor: colors.press.fill, fill: true, tension: 0.3 }]
-        },
-        options: options
-      });
-    })
-    .catch(function(err) { console.log("Erro ao carregar histórico:", err); });
-}
+          if (feeds.length === 0) {
+            labels = ["Sem dados nas últimas 2h"];
+            temp = [null]; hum = [null]; press = [null];
+          }
 
-// Detectar mudanças no tema do sistema e atualizar gráficos
-if (window.matchMedia) {
-  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function() {
+          var colors = getThemeColors();
+          chartTemp     = buildChart(chartTemp,     "chartTemp",     "Temperatura (°C)", labels, temp,  colors.temp);
+          chartHum      = buildChart(chartHum,      "chartHum",      "Humidade (%)",     labels, hum,   colors.hum);
+          chartPressure = buildChart(chartPressure, "chartPressure", "Pressão (hPa)",    labels, press, colors.press);
+        })
+        .catch(function (err) { console.log("Erro ao carregar histórico:", err); });
+    }
+
+    // Redesenhar gráficos se o tema do sistema mudar
+    if (window.matchMedia) {
+      window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateHistoryCharts);
+    }
+
+    // Arranque imediato + atualizações periódicas
+    updateCards();
     updateHistoryCharts();
-  });
-}
-
-updateHistoryCharts();
-setInterval(updateHistoryCharts, 60000); // Atualiza os gráficos a cada 1 minuto
-</script>
-
+    setInterval(updateCards, 15000);          // ThingSpeak: mínimo ~15 s entre pedidos
+    setInterval(updateHistoryCharts, 60000);  // gráficos a cada 1 minuto
+  </script>
 </body>
 </html>
